@@ -2,27 +2,22 @@ import os
 import csv
 import time
 
-# OpenAI
 try:
     import openai
 except ImportError:
     openai = None
 
-# HuggingFace Transformers
 try:
     from transformers import pipeline
 except ImportError:
     pipeline = None
 
 PROMPT_FILE = "/Users/aayushks/aiml_proj/llm-robustness-analysis/data/adversarial_prompts.csv"
-OUTPUT_FILE = "/Users/aayushks/aiml_proj/llm-robustness-analysis/data/adversarial_prompts.csv"
+OUTPUT_FILE = "/Users/aayushks/aiml_proj/llm-robustness-analysis/data/adversarial_outputs.csv"  # <-- Don't overwrite prompts file!
 
-# === CONFIG ===
-MODEL_PROVIDER = "openai"   # Options: "openai" or "hf"
 OPENAI_MODEL = "gpt-3.5-turbo"
-HUGGINGFACE_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"  # Example: any pipeline-compatible model
+HUGGINGFACE_MODEL = "distilgpt2"
 
-# HuggingFace pipeline cache
 HF_PIPE = None
 
 def read_prompts(filename):
@@ -39,9 +34,7 @@ def query_openai(prompt):
     try:
         response = openai.chat.completions.create(
             model=OPENAI_MODEL,
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
+            messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
             max_tokens=150
         )
@@ -71,6 +64,14 @@ def write_outputs(results, filename):
             writer.writerow(r)
 
 def main():
+    print("Which model provider would you like to use?")
+    print("(Type 'openai' for OpenAI API, or 'hf' for HuggingFace Transformers)")
+    MODEL_PROVIDER = input("Enter your choice [openai/hf]: ").strip().lower()
+
+    if MODEL_PROVIDER not in ("openai", "hf"):
+        print("Invalid input. Please restart and enter 'openai' or 'hf'.")
+        return
+
     prompts = read_prompts(PROMPT_FILE)
     results = []
     print(f"Running {len(prompts)} prompts using {MODEL_PROVIDER}...")
@@ -88,9 +89,9 @@ def main():
             "model_provider": MODEL_PROVIDER,
             "model_output": output
         })
-        time.sleep(1)  # Adjust for rate limits
+        time.sleep(1)
     write_outputs(results, OUTPUT_FILE)
-    print("Done! Outputs saved to:", OUTPUT_FILE)
+    print(f"Done! Outputs saved to: {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     main()
