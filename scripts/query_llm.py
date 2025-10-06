@@ -14,8 +14,8 @@ try:
 except ImportError:
     pipeline = None
 
-PROMPT_FILE = "../data/adversarial_prompts.csv"
-OUTPUT_FILE = "../data/adversarial_outputs.csv"
+PROMPT_FILE = "/Users/aayushks/aiml_proj/llm-robustness-analysis/data/adversarial_prompts.csv"
+OUTPUT_FILE = "/Users/aayushks/aiml_proj/llm-robustness-analysis/data/adversarial_prompts.csv"
 
 # === CONFIG ===
 MODEL_PROVIDER = "openai"   # Options: "openai" or "hf"
@@ -34,17 +34,18 @@ def read_prompts(filename):
     return prompts
 
 def query_openai(prompt):
-    if openai is None:
-        return "ERROR: openai library not installed"
+    import openai
+    openai.api_key = os.getenv("OPENAI_API_KEY")
     try:
-        openai.api_key = os.getenv("OPENAI_API_KEY")  # Or set directly
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model=OPENAI_MODEL,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
             temperature=0.7,
             max_tokens=150
         )
-        return response["choices"][0]["message"]["content"].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"OpenAI error for prompt: {prompt}\n{e}")
         return "ERROR"
